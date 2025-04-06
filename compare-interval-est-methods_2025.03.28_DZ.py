@@ -11,7 +11,6 @@
 # Generate synthetic data
 #-------------------------------------------
 
-
 from statsmodels.stats.proportion import proportion_confint
 
 # Set the random seed for reproducibility
@@ -112,21 +111,6 @@ for n in sample_sizes:
 
 results.head()
 
-# Plot coverage probabilities
-import matplotlib.pyplot as plt
-import seaborn as sns
-
-plt.figure(figsize=(10, 6))
-sns.barplot(data=results, x='sample_size', y='coverage_probability', hue='method')
-plt.title('Coverage Probability of Different Methods')
-plt.xlabel('Sample Size')
-plt.ylabel('Coverage Probability')
-plt.legend(title='Method')
-plt.xticks(rotation=45)
-plt.tight_layout()
-# plt.savefig('coverage_probability.png')
-plt.show()
-
 
 #-----------------------------------------------------------------------
 # b.Average length of confidence intervals: the mean width of the CIs, indicating precision.
@@ -135,9 +119,9 @@ plt.show()
 results_precision = pd.DataFrame(columns=['sample_size', 'true_proportion', 'method', 'average_length'])
 
 # Initialize counts
-length_wald = []
-length_wilson = []
-length_jeffreys = []
+ci_length_wald = []
+ci_length_wilson = []
+ci_length_jeffreys = []
 
 for n in sample_sizes:
     for p in true_proportion:
@@ -147,31 +131,69 @@ for n in sample_sizes:
         for i in range(n_simulations):
             count = simulated_data[i]
 
-        #     # Wald method
-        #     ci_wald = proportion_confint(count, n, alpha=0.05, method='normal')
-        #     if ci_wald[0] <= p <= ci_wald[1]:
-        #         coverage_wald += 1
+            # Wald method
+            ci_wald = proportion_confint(count, n, alpha=0.05, method='normal')
+            ci_length_wald.append(ci_wald[1] - ci_wald[0])
 
-        #     # Wilson method
-        #     ci_wilson = proportion_confint(count, n, alpha=0.05, method='wilson')
-        #     if ci_wilson[0] <= p <= ci_wilson[1]:
-        #         coverage_wilson += 1
+            # Wilson method
+            ci_wilson = proportion_confint(count, n, alpha=0.05, method='wilson')
+            ci_length_wilson.append(ci_wilson[1] - ci_wilson[0])
             
-        #     # Jeffrey method
-        #     ci_jeffreys = proportion_confint(count, n, alpha=0.05, method='jeffreys')
-        #     if ci_jeffreys[0] <= p <= ci_jeffreys[1]:
-        #         coverage_jeffreys += 1
+            # Jeffrey method
+            ci_jeffreys = proportion_confint(count, n, alpha=0.05, method='jeffreys')
+            ci_length_jeffreys.append(ci_jeffreys[1] - ci_jeffreys[0])
 
-        # # Calculate coverage probabilities
-        # coverage_probability_wald = coverage_wald / n_simulations
-        # coverage_probability_wilson = coverage_wilson / n_simulations
-        # coverage_probability_jeffreys = coverage_jeffreys / n_simulations
+        # Calculate average lengths
+        average_length_wald = np.mean(ci_length_wald)
+        average_length_wilson = np.mean(ci_length_wilson)
+        average_length_jeffreys = np.mean(ci_length_jeffreys)
 
+        # Append results to the dataframe
+        results_precision = pd.concat([results_precision, pd.DataFrame([{'sample_size': n, 'true_proportion': p, 
+                                             'method': 'Wald', 
+                                             'average_length': average_length_wald}])], 
+                    ignore_index=True)
+        results_precision = pd.concat([results_precision, pd.DataFrame([{'sample_size': n, 'true_proportion': p, 
+                                             'method': 'Wilson', 
+                                             'average_length': average_length_wilson}])],
+                    ignore_index=True)
+        results_precision = pd.concat([results_precision, pd.DataFrame([{'sample_size': n, 'true_proportion': p, 
+                                             'method': 'Jeffreys', 
+                                             'average_length': average_length_jeffreys}])],
+                    ignore_index=True)
 
+        # Reset the length for the next iteration
+        ci_length_wald = []
+        ci_length_wilson = []
+        ci_length_jeffreys = []
 
+results_precision.head(20)
 
 
 #--------------------------------------------
 # Visualize the results 
 #--------------------------------------------
 
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Draw the boxplot grouped by combined sample_size and true_proportion
+sns.boxplot(
+    data=results_precision,
+    x='sample_size',
+    y='average_length',
+    hue='method',
+    palette='Set2',
+    dodge=True,
+    fliersize=0
+)
+
+plt.title('Average Length by Sample Size and True Proportion')
+plt.xlabel('Sample Size')
+plt.ylabel('Average Length')
+plt.xticks(rotation=45)
+
+# Fix the legend to avoid duplication
+plt.legend(title='True proportion', bbox_to_anchor=(1.05, 1), loc='upper left')
+plt.tight_layout()
+plt.show()
