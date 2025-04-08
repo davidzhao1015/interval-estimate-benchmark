@@ -20,7 +20,8 @@ np.random.seed(123)
 # Define the parameters for the binomial distribution
 sample_sizes = [30, 100, 500]
 
-true_proportion = [0.1, 0.3, 0.5, 0.7, 0.9]
+# true_proportion = [0.1, 0.3, 0.5, 0.7, 0.9]
+true_proportion = np.linspace(0.001, 0.1, 5)
 
 # Number of simulations
 n_simulations = 1000
@@ -116,7 +117,7 @@ results.head()
 # b.Average length of confidence intervals: the mean width of the CIs, indicating precision.
 #-----------------------------------------------------------------------
 
-results_precision = pd.DataFrame(columns=['sample_size', 'true_proportion', 'method', 'average_length'])
+results_precision = pd.DataFrame(columns=['sample_size', 'true_proportion', 'method', 'average_length', 'sd_length'])
 
 # Initialize counts
 ci_length_wald = []
@@ -148,18 +149,26 @@ for n in sample_sizes:
         average_length_wilson = np.mean(ci_length_wilson)
         average_length_jeffreys = np.mean(ci_length_jeffreys)
 
+        # Calculate standard deviations
+        sd_length_wald = np.std(ci_length_wald)
+        sd_length_wilson = np.std(ci_length_wilson)
+        sd_length_jeffreys = np.std(ci_length_jeffreys)
+
         # Append results to the dataframe
         results_precision = pd.concat([results_precision, pd.DataFrame([{'sample_size': n, 'true_proportion': p, 
                                              'method': 'Wald', 
-                                             'average_length': average_length_wald}])], 
+                                             'average_length': average_length_wald,
+                                             'sd_length': sd_length_wald}])], 
                     ignore_index=True)
         results_precision = pd.concat([results_precision, pd.DataFrame([{'sample_size': n, 'true_proportion': p, 
                                              'method': 'Wilson', 
-                                             'average_length': average_length_wilson}])],
+                                             'average_length': average_length_wilson,
+                                             'sd_length': sd_length_wilson}])],
                     ignore_index=True)
         results_precision = pd.concat([results_precision, pd.DataFrame([{'sample_size': n, 'true_proportion': p, 
                                              'method': 'Jeffreys', 
-                                             'average_length': average_length_jeffreys}])],
+                                             'average_length': average_length_jeffreys,
+                                             'sd_length': sd_length_jeffreys}])],
                     ignore_index=True)
 
         # Reset the length for the next iteration
@@ -177,23 +186,46 @@ results_precision.head(20)
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-# Draw the boxplot grouped by combined sample_size and true_proportion
-sns.boxplot(
-    data=results_precision,
-    x='sample_size',
-    y='average_length',
+
+# To illustrate coverage probabilities by methods, draw the bar plot grouped by method, split by sample size
+barplot_coverage = sns.catplot(
+    data=results,
+    x='sample_size', 
+    y='coverage_probability', 
     hue='method',
-    palette='Set2',
-    dodge=True,
-    fliersize=0
-)
+    col='true_proportion',
+    kind='bar',
+    # height=4,
+    # aspect=0.8,
+    height=5,
+    aspect=1.2,
+    palette='muted',
+    ci=None)
+barplot_coverage.set_axis_labels("Sample Size", "Coverage Probability")
+barplot_coverage.set(ylim=(0.75, 1.05))
 
-plt.title('Average Length by Sample Size and True Proportion')
-plt.xlabel('Sample Size')
-plt.ylabel('Average Length')
-plt.xticks(rotation=45)
+# Add a horizontal line at y = 0.95 to all facets
+for ax in barplot_coverage.axes.flat:
+    ax.axhline(0.95, ls='--', color='red', linewidth=1.2)  # dashed red line
 
-# Fix the legend to avoid duplication
-plt.legend(title='True proportion', bbox_to_anchor=(1.05, 1), loc='upper left')
-plt.tight_layout()
 plt.show()
+barplot_coverage.savefig("barplot_coverage_facet.png", dpi=300, bbox_inches='tight')
+
+
+# To illustrate precisions (95 CI width) by methods, draw the bar plot grouped by method, split by sample size
+barplot_precision = sns.catplot(
+    data=results_precision,
+    x='sample_size', 
+    y='average_length', 
+    hue='method',
+    col='true_proportion',
+    kind='bar',
+    # height=4,
+    # aspect=0.8,
+    palette='muted',
+    ci=None)
+
+barplot_precision.set_axis_labels("Sample Size", "Average Length")
+plt.show()
+
+barplot_precision.savefig("barplot_precision_facet.png", dpi=300, bbox_inches='tight')
