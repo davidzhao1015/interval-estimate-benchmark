@@ -32,7 +32,7 @@ n_simulations = 1000
 #----------------------------------------------------------------------
 
 cases = 1
-n = 100
+n = 2000
 
 # 1. Wald method
 ci_wald_estimate = proportion_confint(cases, n, alpha=0.05, method='normal')
