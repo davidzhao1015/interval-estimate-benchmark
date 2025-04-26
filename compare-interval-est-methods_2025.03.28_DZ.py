@@ -18,10 +18,23 @@ import numpy as np
 np.random.seed(123)
 
 # Define the parameters for the binomial distribution
-sample_sizes = [30, 100, 500]
+sample_sizes = [30, 100, 300, 1000, 30000] 
+
+# 30: very small cohort (typically single center studies)
+# 100: small multicenter studies
+# 300: modest registry
+# 1000: larger national-level data
+# 30000: large cohort studies
+
 
 # true_proportion = [0.1, 0.3, 0.5, 0.7, 0.9]
-true_proportion = np.linspace(0.001, 0.1, 5)
+true_proportion = [0.0005, 0.001, 0.005, 0.01, 0.02]
+
+# 0.05% (extremely rare, like mortality in some rare conditions)
+# 0.1% (rare events)
+# 0.5% (low but detectable)
+# 1% (moderate)
+# 2% (still rare but “higher-risk” subgroup)
 
 # Number of simulations
 n_simulations = 1000
@@ -186,8 +199,9 @@ results_precision.head(20)
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+sns.set_context("talk", font_scale=1.2)
 
-# To illustrate coverage probabilities by methods, draw the bar plot grouped by method, split by sample size
+# Create the catplot WITHOUT automatic legend
 barplot_coverage = sns.catplot(
     data=results,
     x='sample_size', 
@@ -195,21 +209,23 @@ barplot_coverage = sns.catplot(
     hue='method',
     col='true_proportion',
     kind='bar',
-    # height=4,
-    # aspect=0.8,
     height=5,
     aspect=1.2,
     palette='muted',
-    ci=None)
+    ci=None,
+    legend=True)  
+
+# Set labels and limits
 barplot_coverage.set_axis_labels("Sample Size", "Coverage Probability")
 barplot_coverage.set(ylim=(0.75, 1.05))
 
-# Add a horizontal line at y = 0.95 to all facets
+# Add horizontal line
 for ax in barplot_coverage.axes.flat:
-    ax.axhline(0.95, ls='--', color='red', linewidth=1.2)  # dashed red line
+    ax.axhline(0.95, ls='--', color='red', linewidth=1.2)
 
-plt.show()
+# Save the plot
 barplot_coverage.savefig("barplot_coverage_facet.png", dpi=300, bbox_inches='tight')
+
 
 
 # To illustrate precisions (95 CI width) by methods, draw the bar plot grouped by method, split by sample size
