@@ -1,20 +1,27 @@
-#=============================================================================== 
-# This script compares the performance of different interval estimation methods
-#================================================================================
+"""
+This script benchmarks three methods for estimating 95% confidence intervals (CIs) for proportions:
+- Wald method
+- Wilson method
+- Equal-tailed Jeffreys prior interval
 
-#------------------------------------------
-# Import necessary libraries
-#------------------------------------------
+Simulated binomial data are generated under specified conditions, and each method's coverage probability and precision is evaluated.
+Reusable Python functions are provided for each method.
+"""
 
-
-#-------------------------------------------
-# Generate synthetic data
-#-------------------------------------------
-
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
 from statsmodels.stats.proportion import proportion_confint
 
+
+
+#--------------------------------------------------------------------------------
+# Generate synthetic data
+#-------------------------------------------------------------------------------
+
+
 # Set the random seed for reproducibility
-import numpy as np
 np.random.seed(123)
 
 # Define the parameters for the binomial distribution
@@ -40,9 +47,9 @@ true_proportion = [0.0005, 0.001, 0.005, 0.01, 0.02]
 n_simulations = 1000
 
 
-#---------------------------------------------------------------------
+#-----------------------------------------------------------------------
 # Implement Wald, Wilson, and Jeffreys methods for interval estimation
-#----------------------------------------------------------------------
+#-----------------------------------------------------------------------
 
 cases = 1
 n = 2000
@@ -62,13 +69,11 @@ print(f'95% Jeffreys CI: [{ci_jeffreys_estimate[0]:.4f}, {ci_jeffreys_estimate[1
 
 
 
-#-----------------------------------------------------------------------
+#-------------------------------------------------------------------------------------------------------
 # a. Coverage probability:The proportion of times the true parameter lies within the confidence interval
-#-----------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------
 
 # Initialize dataframe to store results
-import pandas as pd
-
 results = pd.DataFrame(columns=['sample_size', 'true_proportion', 'method', 'coverage_probability'])
 
 # Initialize counts
@@ -126,9 +131,9 @@ for n in sample_sizes:
 results.head()
 
 
-#-----------------------------------------------------------------------
+#-------------------------------------------------------------------------------------------
 # b.Average length of confidence intervals: the mean width of the CIs, indicating precision.
-#-----------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------
 
 results_precision = pd.DataFrame(columns=['sample_size', 'true_proportion', 'method', 'average_length', 'sd_length'])
 
@@ -196,12 +201,8 @@ results_precision.head(20)
 # Visualize the results 
 #--------------------------------------------
 
-import matplotlib.pyplot as plt
-import seaborn as sns
+sns.set_context("talk", font_scale=0.7)
 
-sns.set_context("talk", font_scale=1.2)
-
-# Create the catplot WITHOUT automatic legend
 barplot_coverage = sns.catplot(
     data=results,
     x='sample_size', 
@@ -223,8 +224,10 @@ barplot_coverage.set(ylim=(0.75, 1.05))
 for ax in barplot_coverage.axes.flat:
     ax.axhline(0.95, ls='--', color='red', linewidth=1.2)
 
+plt.show()    
+
 # Save the plot
-barplot_coverage.savefig("barplot_coverage_facet.png", dpi=300, bbox_inches='tight')
+barplot_coverage.savefig("barplot_coverage_facet.png", dpi=300, bbox_inches='tight') 
 
 
 
